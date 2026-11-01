@@ -109,7 +109,7 @@ def runtime_config():
 def build_request(catalog, args, config):
     entry = catalog["operations"][args.operation]
     if args.operation == "login":
-        raise InputError("Login uses binary protobuf. Use scripts/tinder_auth.py for phone login and session renewal.")
+        raise InputError("Login uses binary protobuf. Use scripts/tinder_auth.py for email/phone login and session renewal.")
     variables = {**catalog["defaults"],
                  **{key: config[key] for key in ("auth_token", "base_url", "locale") if key in config},
                  **pairs(args.var)}

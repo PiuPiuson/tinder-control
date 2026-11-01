@@ -28,6 +28,83 @@ def success(token='new-token', refresh='new-refresh', user='me'):
 
 
 class AuthTests(unittest.TestCase):
+    def test_start_email_resets_pending_flow_and_preserves_working_session(self):
+        config = {'device_id': 'same-device', 'auth_token': 'working-token',
+                  'refresh_token': 'working-refresh', 'user_id': 'me',
+                  '_login': {'state': 'validatePhoneOtpState', 'phone': '+441234567890',
+                             'refresh_token': 'stale-challenge', 'app_session_id': 'old-app',
+                             'funnel_session_id': 'old-funnel'}}
+        factor, fields = auth.build_step('start-email', {}, config)
+        self.assertEqual((factor, fields), ('preEmail', {}))
+        self.assertEqual(config['device_id'], 'same-device')
+        self.assertEqual(config['auth_token'], 'working-token')
+        self.assertEqual(config['refresh_token'], 'working-refresh')
+        self.assertEqual(config['user_id'], 'me')
+        self.assertNotIn('phone', config['_login'])
+        self.assertNotIn('refresh_token', config['_login'])
+        self.assertNotEqual(config['_login']['app_session_id'], 'old-app')
+        self.assertNotEqual(config['_login']['funnel_session_id'], 'old-funnel')
+
+    def test_browserless_email_and_existing_phone_login_from_empty_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'auth.json'
+            expected = [
+                ('preEmail', {}, {'getEmailState': {}}),
+                ('email', {'email': 'person@example.test'},
+                 {'validateEmailOtpState': {'refreshToken': 'email-code-challenge', 'otpLength': 6}}),
+                ('emailOtp', {'email': 'person@example.test', 'otp': '001234', 'refreshToken': 'email-code-challenge'},
+                 {'validateExistingPhoneState': {'refreshToken': 'phone-code-challenge',
+                                                 'maskedPhoneNumber': '***1234', 'otpLength': 6, 'smsSent': True}}),
+                ('existingPhoneOtp', {'otp': '005678', 'refreshToken': 'phone-code-challenge'}, success()['body']),
+            ]
+            headers = []
+
+            def transport(config, factor, fields):
+                index = len(headers)
+                wanted_factor, wanted_fields, body = expected[index]
+                self.assertEqual((factor, fields), (wanted_factor, wanted_fields))
+                self.assertNotIn('auth_token', config)
+                self.assertNotIn('refresh_token', config)
+                headers.append(auth.headers_for(config))
+                # Exercise the observed response wire mapping before state handling.
+                return {'http_status': 200,
+                        'body': codec.decode_response(codec._encode_message('AuthGatewayResponse', body))}
+
+            actions = [('start-email', {}, 'email'),
+                       ('email', {'email': 'person@example.test'}, 'verify-email'),
+                       ('verify-email', {'otp': '001234'}, 'verify-sms'),
+                       ('verify-sms', {'otp': '005678'}, None)]
+            for action, values, next_step in actions:
+                result = auth.run_step(action, values, True, path, transport)
+                self.assertTrue(result['ok'])
+                self.assertEqual(result.get('next_step'), next_step)
+                self.assertNotIn('001234', path.read_text())
+                self.assertNotIn('005678', path.read_text())
+                self.assertNotIn('challenge', json.dumps(result))
+            self.assertEqual(len(headers), 4)
+            for name in ('persistent-device-id', 'app-session-id', 'funnel-session-id'):
+                self.assertEqual(len({item[name] for item in headers}), 1)
+            saved = auth.read_config(path)
+            self.assertTrue(result['authenticated'])
+            self.assertEqual(saved['auth_token'], 'new-token')
+            self.assertEqual(saved['refresh_token'], 'new-refresh')
+            self.assertEqual(saved['user_id'], 'me')
+            self.assertNotIn('_login', saved)
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+
+    def test_start_email_preview_never_calls_network_or_changes_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'auth.json'
+            for existing in (None, {'device_id': 'device', 'auth_token': 'saved', 'refresh_token': 'saved-refresh'}):
+                if existing is not None:
+                    auth.save_config(path, existing)
+                before = path.read_bytes() if path.exists() else None
+                result = auth.run_step('start-email', {}, False, path, lambda *args: self.fail('network'))
+                self.assertTrue(result['preview'])
+                self.assertEqual(result['factor'], 'preEmail')
+                self.assertEqual(result['field_names'], [])
+                self.assertEqual(path.read_bytes() if path.exists() else None, before)
+
     def test_sms_flow_carries_latest_pending_token(self):
         config = {'auth_token': 'old-token'}
         factor, values = auth.build_step('start', {'phone': '+441234567890'}, config)
@@ -61,6 +138,7 @@ class AuthTests(unittest.TestCase):
         outcome = auth.accept_response(config, {'http_status': 200, 'body': {'getEmailState': {'refreshToken': 'email-state'}}})
         self.assertEqual(outcome['next_step'], 'email')
         factor, values = auth.build_step('email', {'email': 'person@example.test'}, config)
+        self.assertEqual(values['refreshToken'], 'email-state')
         self.assertNotIn('marketingOptIn', values)
         auth.accept_response(config, {'http_status': 200, 'body': {'validateEmailOtpState': {'refreshToken': 'email-otp-state'}}})
         factor, values = auth.build_step('verify-email', {'otp': '123456'}, config)

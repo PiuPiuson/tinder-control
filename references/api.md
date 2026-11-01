@@ -31,7 +31,7 @@ All operations except login use `X-Auth-Token`. Defaults are `https://api.gotind
 - Source message-body concatenation is retained as provenance in requests.json, but execution requires an explicit body with a matching authoritative match ID.
 - Source enabled headers and query values are retained. The transport requests identity encoding because the standard-library client does not decode Brotli. JSON bodies use Content-Type application/json.
 - Embedded Postman scripts are never executed. The Profile script's documented account-ID extraction is handled by the agent from the response.
-- Login has no body in the original collection. Current Tinder-hosted client code establishes that it uses protobuf, not JSON; the dedicated authentication helper implements phone/SMS, email verification when requested, and refresh. Generate remains a low-level saved operation with undocumented response semantics.
+- Login has no body in the original collection. Current Tinder-hosted client code establishes that it uses protobuf, not JSON; the dedicated authentication helper implements direct email/SMS login, phone login, and refresh. Generate remains a low-level saved operation with undocumented response semantics.
 
 ## Maintenance
 

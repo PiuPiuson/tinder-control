@@ -32,7 +32,7 @@ python3 scripts/tinder.py matches --query count=20
 python3 scripts/tinder.py messages --var match_id=MATCH_ID
 ```
 
-See [authentication](references/authentication.md) for phone/SMS login, email verification, browser session import, and renewal. The browser import accepts an authorized login response captured by your browser tooling; this repository does not include a browser driver. If you already have an API credential, the helper also accepts `TINDER_AUTH_TOKEN` from your environment.
+See [authentication](references/authentication.md) for direct email/SMS login (`start-email --execute`), phone login, browser session import, and renewal. The browser import accepts an authorized login response captured by your browser tooling; this repository does not include a browser driver. If you already have an API credential, the helper also accepts `TINDER_AUTH_TOKEN` from your environment.
 
 Credentials live outside the repository in `~/.config/tinder-control/auth.json`, with mode `0600`. `XDG_CONFIG_HOME` or `TINDER_AUTH_FILE` can select another location. Never commit that file or raw login captures. API responses can contain personal data even when authentication secrets are redacted.
 
@@ -47,7 +47,8 @@ The required message body and full operation list are in [SKILL.md](SKILL.md) an
 
 ## Status and limitations
 
-- Browser email login followed by an existing-phone SMS challenge, session import, a direct refresh exchange, and a read-only profile check were verified on 2026-11-01.
+- Direct email login followed by an existing-phone SMS challenge and a read-only profile identity check completed on 2026-11-01, starting with a fresh device ID and no saved tokens or browser cookies. No browser was used.
+- Browser session import and a direct refresh exchange were separately verified on the same date.
 - The refresh exchange was tested with a fresh session. Renewal at the actual expiry boundary has not yet been observed live.
 - Direct phone login returned a successful SMS-sent flag, but delivery was not confirmed. A server flag does not establish delivery.
 - Other account operations come from the sanitized request catalog and offline construction tests; they have not all been exercised live.

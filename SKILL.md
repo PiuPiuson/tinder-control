@@ -11,7 +11,7 @@ The endpoint catalog was adapted from an author-provided reverse-engineered Post
 
 ## Login
 
-Run `python3 <skill-directory>/scripts/tinder_auth.py status` for a secret-free local session summary. Existing account operations renew an expiring session automatically when a refresh credential is saved. A working initial login used Tinder's browser email flow followed by verification of the existing account phone. Follow [authentication](references/authentication.md) for browser session import, direct phone login, and renewal; never send JSON to the protobuf login endpoint.
+Run `python3 <skill-directory>/scripts/tinder_auth.py status` for a secret-free local session summary. Existing account operations renew an expiring session automatically when a refresh credential is saved. For email login, start with `start-email --execute`, then follow the returned email and SMS verification steps. Read [authentication](references/authentication.md) for direct email/phone login, browser session import, and renewal; never send JSON to the protobuf login endpoint.
 
 ## Use
 

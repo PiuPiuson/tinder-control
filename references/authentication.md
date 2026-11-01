@@ -2,6 +2,20 @@
 
 The helper implements Tinder's protobuf login gateway and persistent refresh-token flow. Current first-party web client code was inspected on 2026-11-01. It uses the same `/v3/auth/login` gateway seen in original mobile reverse-engineering work; current native iOS/Android client parity has not been established. The helper identifies itself as platform `web` and does not invent native device attestations or collector signals.
 
+## Direct email login
+
+The email flow can be initialized directly through the same gateway, without browser cookies or a browser-imported token. On 2026-11-01 this completed end to end using a fresh device ID and no saved login credentials: email code, existing-phone SMS code, terminal login result, and a successful read-only profile identity check. The sequence observed in the first-party client is `preEmail` → `getEmailState` → `email` → `validateEmailOtpState` → `emailOtp`. Tinder may then require an existing-phone SMS challenge before issuing the final session.
+
+Resolve paths relative to the skill directory. Each command performs one authentication step only when `--execute` is supplied; otherwise it previews the request.
+
+1. Run `python3 scripts/tinder_auth.py start-email --execute`. This sends the empty protobuf `preEmail` factor (request field 24) and starts a new verification flow. Inspect the returned state before continuing.
+2. If `next_step` is `email`, place `{"email":"<existing account email>"}` in a private JSON file with mode 0600. Run `python3 scripts/tinder_auth.py email --input-file /absolute/private/email.json --execute`.
+3. If `next_step` is `verify-email`, obtain the current code from the user or an authorized inbox. Put `{"otp":"<email code>"}` in a private JSON file and run `python3 scripts/tinder_auth.py verify-email --input-file /absolute/private/code.json --execute`.
+4. If `next_step` is `verify-sms`, confirm the displayed masked phone belongs to the intended account. Write `{"otp":"<SMS code>"}` to a separate private `sms-code.json` file with mode 0600, then run `python3 scripts/tinder_auth.py verify-sms --input-file /absolute/private/sms-code.json --execute`. For an existing-phone challenge, the helper sends `existingPhoneOtp` with the latest challenge credential; the full phone number is not needed.
+5. Only `authenticated: true` means login is complete. Remove temporary email/code files. The saved session can renew directly on later account operations.
+
+The initial `getEmailState` can omit a refresh credential. Submit the email without one in that case; later steps use each newly returned challenge credential. Keep the same private auth file throughout the flow; it holds the stable device ID, app/funnel session IDs, and the current challenge credential. Do not copy a challenge from a different attempt or reuse a previous code. Unsupported states, including CAPTCHA, stop for completion in Tinder. Browser-free login still requires the verification codes Tinder requests.
+
 ## Browser login and session import
 
 On 2026-11-01 the live Tinder browser offered email login. Email verification led to an existing-phone SMS challenge for the unrecognized device. Completing both returned a terminal `loginResult`. This route successfully authenticated the intended account; a subsequent direct protobuf refresh and read-only profile identity check both returned HTTP 200. The refresh test used a fresh session, so expiry-boundary renewal has not yet been observed.
@@ -64,8 +78,8 @@ Configuration is stored outside the skill at `~/.config/tinder-control/auth.json
 
 ## Protocol evidence
 
-- [Tinder AuthService](https://tinder.com/static/build/l/chunks/pc-services-7f0e215269531bdf1b8b.js): phone/SMS/email factors; `refreshAuth` submits `{refreshAuth:{refreshToken}}` to the login endpoint.
-- [Tinder protobuf schema](https://tinder.com/static/build/l/chunks/async-protobuf-schema-authgateway-8036d41ebaac5496c7d2.js): exact request/response field numbers and scalar wrappers. `auth_codec.py` independently implements the standard wire format using these field mappings.
+- [Tinder AuthService](https://tinder.com/static/build/l/chunks/pc-services-7f0e215269531bdf1b8b.js): `preEmailLogin` initializes email verification; phone/SMS/email factors; `refreshAuth` submits `{refreshAuth:{refreshToken}}` to the login endpoint.
+- [Tinder protobuf schema](https://tinder.com/static/build/l/chunks/async-protobuf-schema-authgateway-8036d41ebaac5496c7d2.js): exact request/response field numbers and scalar wrappers, including the empty `PreEmail` message at request field 24. `auth_codec.py` independently implements the standard wire format using these field mappings.
 - [Tinder main client](https://tinder.com/static/build/l/main-1a310f8f22184ab46370.js): `/v3/auth/login`, protobuf content type, session headers, credential storage, and `Date.now() + authTokenTtl` expiration calculation. Observed client version 7.40.0, build 1074000.
 - [Tinder Security FAQs](https://www.help.tinder.com/hc/en-us/articles/115003957446-Security-FAQs): phone login requires SMS verification.
 
@@ -73,4 +87,4 @@ The request is HTTPS POST to `https://api.gotinder.com/v3/auth/login?locale=en-G
 
 Phone input accepts `+` country-code notation from the user but sends digits-only international format in phone, phoneOtp, and phoneOtpResend. The [current Tinder phone-input component](https://tinder.com/static/build/l/chunks/51058-70f3b1b98aa88cddbbae.js) concatenates country code and local digits; its `+` is display-only. Existing saved numbers with a leading `+` are normalized when making requests.
 
-Saved-client inspection and offline tests establish wire format and state handling. The browser email-plus-SMS login and subsequent direct refresh/profile check were verified live on 2026-11-01. Direct phone-first requests returned `smsSent: true` but delivery was not confirmed. Unsupported challenges are surfaced rather than silently bypassed.
+Saved-client inspection and offline tests establish wire format and state handling. A direct email-plus-SMS login starting with a fresh device and no saved credentials was verified end to end on 2026-11-01, including a read-only profile identity check. A separate browser login/import and subsequent direct refresh/profile check were also verified that day. Direct phone-first requests returned `smsSent: true` but delivery was not confirmed. Unsupported challenges are surfaced rather than silently bypassed.

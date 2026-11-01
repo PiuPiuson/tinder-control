@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phone verification and persistent session renewal using Tinder's auth gateway."""
+"""Email/phone verification and session renewal using Tinder's auth gateway."""
 
 import argparse
 import copy
@@ -221,6 +221,10 @@ def accept_response(config, response, now=None):
 def build_step(action, values, config):
     pending = config.get("_login", {})
     refresh = pending.get("refresh_token")
+    if action == "start-email":
+        config["_login"] = {"state": "starting", "app_session_id": str(uuid.uuid4()),
+                            "funnel_session_id": uuid.uuid4().hex[:16]}
+        return "preEmail", {}
     if action == "start":
         phone = re.sub(r"[\s()-]", "", str(values.get("phone", "")))
         if not re.fullmatch(r"\+[1-9][0-9]{7,14}", phone):
@@ -231,11 +235,11 @@ def build_step(action, values, config):
         return "phone", {"phone": phone}
     if action == "refresh":
         if not config.get("refresh_token"):
-            raise AuthError("No refresh credential is saved. Complete the initial phone login first.")
+            raise AuthError("No refresh credential is saved. Complete an initial login first.")
         return "refreshAuth", {"refreshToken": config["refresh_token"]}
     if action == "verify-sms":
         if pending.get("state") not in ("validatePhoneOtpState", "validateExistingPhoneState"):
-            raise AuthError("No SMS verification is pending. Start phone login first.")
+            raise AuthError("No SMS verification is pending. Follow the current login steps first.")
         otp = str(values.get("otp", ""))
         if not re.fullmatch(r"[0-9]{4,10}", otp):
             raise AuthError("Supply the SMS code as the otp string in the input file.")
@@ -244,7 +248,7 @@ def build_step(action, values, config):
         return "phoneOtp", {"phone": phone_for_gateway(pending["phone"]), "otp": otp, **({"refreshToken": refresh} if refresh else {})}
     if action == "resend-sms":
         if pending.get("state") not in ("validatePhoneOtpState", "validateExistingPhoneState"):
-            raise AuthError("No SMS verification is pending. Start phone login first.")
+            raise AuthError("No SMS verification is pending. Follow the current login steps first.")
         if pending["state"] == "validateExistingPhoneState":
             if not refresh:
                 raise AuthError("The pending login has no credential for an existing-phone resend.")
@@ -253,13 +257,13 @@ def build_step(action, values, config):
             raise AuthError("The pending login has no phone number.")
         return "phoneOtpResend", {"phone": phone_for_gateway(pending["phone"]), **({"refreshToken": refresh} if refresh else {})}
     if action == "email":
-        if pending.get("state") != "getEmailState" or not refresh:
+        if pending.get("state") != "getEmailState":
             raise AuthError("No email-address step is pending.")
         email = str(values.get("email", ""))
         if not email or "@" not in email:
             raise AuthError("Supply the account email in the input file.")
         pending["email"] = email
-        return "email", {"email": email, "refreshToken": refresh}
+        return "email", {"email": email, **({"refreshToken": refresh} if refresh else {})}
     if action == "verify-email":
         if pending.get("state") != "validateEmailOtpState" or not refresh:
             raise AuthError("No supported email-code verification is pending.")
@@ -307,7 +311,7 @@ def ensure_session(force=False, prior_token=None, path=None, transport=gateway):
         if not force and not due:
             return {"ok": True, "renewed": False}, config
         if not config.get("refresh_token"):
-            return {"ok": False, "error": "Initial phone login is required; no refresh credential is saved."}, config
+            return {"ok": False, "error": "Initial login is required; no refresh credential is saved."}, config
         prepare_session(config)
         save_config(path, config)
         result = accept_response(config, transport(config, "refreshAuth", {"refreshToken": config["refresh_token"]}))
@@ -420,7 +424,7 @@ def import_browser(response_file, metadata, execute=False, path=None, now=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["status", "start", "verify-sms", "resend-sms", "email", "verify-email", "refresh", "import-browser"])
+    parser.add_argument("action", choices=["status", "start", "start-email", "verify-sms", "resend-sms", "email", "verify-email", "refresh", "import-browser"])
     parser.add_argument("--input-file", help="Private JSON input file, or '-' for stdin. Never pass codes in shell arguments.")
     parser.add_argument("--response-file", help="Absolute path to a captured binary login response for import-browser")
     parser.add_argument("--execute", action="store_true", help="Perform this login step; otherwise preview")

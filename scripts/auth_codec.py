@@ -27,6 +27,7 @@ SCHEMAS = {
                        5: ("androidJwsVersion", "w:int32")},
     "EmailOtpResend": {1: ("email", "w:string"), 2: ("refreshToken", "w:string")},
     "GetInitialState": {1: ("refreshToken", "w:string")},
+    "PreEmail": {},
     "DismissSocialConnectionList": {1: ("refreshToken", "string")},
     "ExistingPhoneOTP": {1: ("otp", "string"), 2: ("refreshToken", "w:string")},
     "ExistingPhoneOTPResend": {1: ("refreshToken", "w:string"), 2: ("type", "w:string")},
@@ -100,6 +101,7 @@ REQUEST_FACTORS = {
     "refreshAuth": (10, "RefreshAuth"), "dismissSocialConnectionList": (12, "DismissSocialConnectionList"),
     "captcha": (18, "Captcha"), "existingPhoneOtp": (19, "ExistingPhoneOTP"),
     "existingPhoneOtpResend": (20, "ExistingPhoneOTPResend"),
+    "preEmail": (24, "PreEmail"),
 }
 RESPONSE_STATES = frozenset(value[0] for number, value in SCHEMAS["AuthGatewayResponse"].items() if 3 <= number <= 20)
 PRIMITIVES = {"string", "int32", "int64", "bool"}

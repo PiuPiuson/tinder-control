@@ -17,6 +17,10 @@ class AuthCodecTests(unittest.TestCase):
     def test_phone_literal_wire(self):
         self.assertEqual(codec.encode_request("phone", {"phone": "+123"}), b"\x0a\x06\x0a\x04+123")
 
+    def test_pre_email_literal_wire(self):
+        # AuthGatewayRequest field 24 contains an empty PreEmail message.
+        self.assertEqual(codec.encode_request("preEmail", {}), bytes.fromhex("c2 01 00"))
+
     def test_otp_wrapper_and_leading_zero_preserved(self):
         expected = bytes.fromhex("12 16 0a 06 0a 04 2b 31 32 33 12 06 30 30 31 32 33 34 1a 04 0a 02 72 74")
         self.assertEqual(codec.encode_request("phoneOtp", {"phone": "+123", "otp": "001234", "refreshToken": "rt"}), expected)
