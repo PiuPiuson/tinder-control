@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tinder Control"
+  short_description: "Control Tinder with login and session renewal"
+  default_prompt: "Use $tinder-control to carry out my requested Tinder action."

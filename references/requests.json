@@ -1,0 +1,308 @@
+{
+  "source": {
+    "description": "Sanitized endpoint definitions adapted from an author-provided reverse-engineered Postman collection.",
+    "captured_at": "2026-11-01"
+  },
+  "defaults": {
+    "base_url": "https://api.gotinder.com",
+    "locale": "en-GB"
+  },
+  "operations": {
+    "like-user": {
+      "method": "POST",
+      "path": "like/{{user_id}}",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": null
+    },
+    "pass-user": {
+      "method": "POST",
+      "path": "pass/{{user_id}}",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": null
+    },
+    "my-likes": {
+      "method": "GET",
+      "path": "v2/my-likes",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": null
+    },
+    "fast-match": {
+      "method": "GET",
+      "path": "v2/fast-match",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": null
+    },
+    "messages": {
+      "method": "GET",
+      "path": "v2/matches/{{match_id}}/messages",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        },
+        {
+          "key": "count",
+          "value": "200"
+        },
+        {
+          "key": "message",
+          "value": "0"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}",
+        "platform": "web"
+      },
+      "body": null
+    },
+    "send-message": {
+      "method": "POST",
+      "path": "user/matches/{{match_id}}",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": {
+        "userId": "{{my_id}}",
+        "otherId": "{{user_id}}",
+        "matchId": "{{user_id}}{{my_id}}",
+        "sessionId": null,
+        "message": "{{message}}"
+      }
+    },
+    "like-message": {
+      "method": "POST",
+      "path": "message/{{message_id}}/like",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": {
+        "message_id": "{{message_id}}"
+      }
+    },
+    "unlike-message": {
+      "method": "DELETE",
+      "path": "message/{{message_id}}/like",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": {
+        "message_id": "{{message_id}}"
+      }
+    },
+    "matches": {
+      "method": "GET",
+      "path": "v2/matches",
+      "query": [
+        {
+          "key": "locale",
+          "value": "en"
+        },
+        {
+          "key": "count",
+          "value": "2"
+        },
+        {
+          "key": "message",
+          "value": "1"
+        },
+        {
+          "key": "is_tinder_u",
+          "value": "false"
+        },
+        {
+          "key": "include_conversations",
+          "value": "true"
+        }
+      ],
+      "headers": {
+        "Referer": "https://tinder.com/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.2 Safari/605.1.15",
+        "Origin": "https://tinder.com",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Site": "cross-site",
+        "Accept-Language": "en,en-GB",
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip, deflate, br",
+        "support-short-video": "1",
+        "X-Auth-Token": "{{auth_token}}",
+        "x-supported-image-formats": "jpeg",
+        "platform": "web"
+      },
+      "body": null
+    },
+    "user": {
+      "method": "GET",
+      "path": "user/{{user_id}}",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}",
+        "platform": "web"
+      },
+      "body": null
+    },
+    "updates": {
+      "method": "POST",
+      "path": "updates",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": {
+        "nudge": false,
+        "last_activity_date": "{{last_activity_date}}"
+      }
+    },
+    "location": {
+      "method": "POST",
+      "path": "v2/meta",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": {
+        "lat": "{{lat}}",
+        "lon": "{{lon}}"
+      }
+    },
+    "recommendations": {
+      "method": "GET",
+      "path": "v2/recs/core",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": null
+    },
+    "profile": {
+      "method": "GET",
+      "path": "v2/profile",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        },
+        {
+          "key": "include",
+          "value": "account,user,likes,offerings,paywalls,plus_control,purchase"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": null
+    },
+    "login": {
+      "method": "POST",
+      "path": "v3/auth/login",
+      "query": [
+        {
+          "key": "locale",
+          "value": "en-GB"
+        }
+      ],
+      "headers": {},
+      "body": null,
+      "handler": "scripts/tinder_auth.py",
+      "note": "Binary protobuf login and renewal implemented from current Tinder client; never submit JSON here."
+    },
+    "explore": {
+      "method": "GET",
+      "path": "v2/explore",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": null
+    },
+    "generate": {
+      "method": "GET",
+      "path": "ws/generate",
+      "query": [
+        {
+          "key": "locale",
+          "value": "{{locale}}"
+        }
+      ],
+      "headers": {
+        "X-Auth-Token": "{{auth_token}}"
+      },
+      "body": null,
+      "note": "Purpose and response shape are undocumented; invoke only when explicitly needed."
+    }
+  }
+}

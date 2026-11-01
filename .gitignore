@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+.env
+.env.*
+auth.json
+auth.json.lock
+.auth-*
+private/
+work/
+.playwright-cli/
+*.bin
+*.har
+phone.json
+code.json
+login-meta.json
